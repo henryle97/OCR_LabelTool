@@ -9,6 +9,7 @@ import glob
 class OCRLabelApp(QWidget):
     def __init__(self, image_dir):
         super().__init__()
+        print(image_dir)
         self.title_app = "OCR Labeler"
         self.x = 300
         self.y = 300
@@ -48,6 +49,8 @@ class OCRLabelApp(QWidget):
         self.previous_button.clicked.connect(self.hanle_press_previous_button)
         self.load_latest_image = QPushButton("Load latest image")
         self.load_latest_image.clicked.connect(self.handle_load_latest_image)
+        self.delete_img = QPushButton("Delete")
+        self.delete_img.clicked.connect(self.handle_delete_img)
 
         # Progress
         self.progress_bar = QProgressBar()
@@ -61,9 +64,12 @@ class OCRLabelApp(QWidget):
         self.layout.addWidget(self.text_box, 1, 0, 1, 5)
         self.layout.addWidget(self.next_button, 1, 5, 1, 1)
 
+
         self.layout.addWidget(self.previous_button, 2, 5, 1, 1)
         self.layout.addWidget(self.progress_bar, 2, 0 , 1, 5)
         self.layout.addWidget(self.load_latest_image, 3,5, 1,1)
+        self.layout.addWidget(self.delete_img, 4, 5 ,1 ,1)
+
         self.setLayout(self.layout)
         self.show()
 
@@ -76,7 +82,9 @@ class OCRLabelApp(QWidget):
 
     def update_text_box(self):
         self.text_box.clear()
-        label_text_path = self.img_paths[self.current_img_index].split(".")[0] + ".txt"
+        label_text_path = os.path.join(os.path.dirname(self.img_paths[self.current_img_index]), \
+                                       os.path.basename(self.img_paths[self.current_img_index]).split(".")[0] + ".txt")
+        print(label_text_path)
         if os.path.exists(label_text_path) and os.path.getsize(label_text_path):
             label_of_img = open(label_text_path, 'r', encoding='utf-8').read().strip()
             self.text_box.setText(label_of_img)
@@ -124,9 +132,16 @@ class OCRLabelApp(QWidget):
             with open(self.log_path, 'w') as f:
                 f.write(str(self.current_img_index))
 
+    def handle_delete_img(self):
+        img_path_del = self.img_paths[self.current_img_index]
+        os.remove(img_path_del)
+        self.img_paths.remove(img_path_del)
+        self.total_img -=1
+        self.update_all()
 
     def save_label(self):
-        save_txt_path = self.img_paths[self.current_img_index].split(".")[0] + ".txt"
+        save_txt_path = os.path.join(os.path.dirname(self.img_paths[self.current_img_index]), \
+                                       os.path.basename(self.img_paths[self.current_img_index]).split(".")[0] + ".txt")
         label_text = self.text_box.text()
         with open(save_txt_path, 'w', encoding='utf-8') as f:
             f.write(label_text)
@@ -144,7 +159,7 @@ class OCRLabelApp(QWidget):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--image_dir", type=str, default="image_dir")
-    args = parser.parse_args('')
+    args = parser.parse_args()
     app = QApplication(sys.argv)
     ex = OCRLabelApp(args.image_dir)
     sys.exit(app.exec_())
