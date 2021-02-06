@@ -20,6 +20,8 @@ class OCRLabelApp(QWidget):
         self.total_img = len(self.img_paths)
         self.current_img_index = 0
 
+        self.log_path = "hist.log"
+
         self.layout = QGridLayout()
         self.__init_ui()
 
@@ -44,6 +46,8 @@ class OCRLabelApp(QWidget):
         self.next_button.clicked.connect(self.handle_press_next_button)
         self.previous_button = QPushButton("Previous Image")
         self.previous_button.clicked.connect(self.hanle_press_previous_button)
+        self.load_latest_image = QPushButton("Load latest image")
+        self.load_latest_image.clicked.connect(self.handle_load_latest_image)
 
         # Progress
         self.progress_bar = QProgressBar()
@@ -59,7 +63,7 @@ class OCRLabelApp(QWidget):
 
         self.layout.addWidget(self.previous_button, 2, 5, 1, 1)
         self.layout.addWidget(self.progress_bar, 2, 0 , 1, 5)
-
+        self.layout.addWidget(self.load_latest_image, 3,5, 1,1)
         self.setLayout(self.layout)
         self.show()
 
@@ -93,6 +97,8 @@ class OCRLabelApp(QWidget):
         else:
             self.save_label()
 
+        self.handle_save_latest_image()
+
     def hanle_press_previous_button(self):
         if self.current_img_index > 0:
             self.save_label()
@@ -100,6 +106,24 @@ class OCRLabelApp(QWidget):
             self.update_all()
         else:
             self.save_label()
+
+    def handle_load_latest_image(self):
+        if os.path.exists(self.log_path) and os.path.getsize(self.log_path):
+            with open(self.log_path, 'r') as f_r:
+                latest_index = int(f_r.read().strip())
+                self.current_img_index = latest_index
+
+        self.update_all()
+
+    def handle_save_latest_image(self):
+        latest_index = -1
+        if os.path.exists(self.log_path) and os.path.getsize(self.log_path):
+            with open(self.log_path, 'r') as f_r:
+                latest_index = int(f_r.read().strip())
+        if self.current_img_index > latest_index:
+            with open(self.log_path, 'w') as f:
+                f.write(str(self.current_img_index))
+
 
     def save_label(self):
         save_txt_path = self.img_paths[self.current_img_index].split(".")[0] + ".txt"
