@@ -21,7 +21,7 @@ class OCRLabelApp(QWidget):
         self.total_img = len(self.img_paths)
         self.current_img_index = 0
 
-        self.log_path = "hist.log"
+        self.log_path = "ocr-labeler/hist.log"
 
         self.layout = QGridLayout()
         self.__init_ui()
@@ -36,11 +36,14 @@ class OCRLabelApp(QWidget):
 
         # Text box widget
         self.text_box = QLineEdit()
+        
         font = self.text_box.font()
         font.setPointSizeF(self.font_size)
         self.text_box.setFont(font)
         self.text_box.resize(280, 50)
         self.update_text_box()
+
+        self.text_box.returnPressed.connect(self.handle_press_next_button)
 
         # Button
         self.next_button = QPushButton('Next Image')
@@ -74,9 +77,14 @@ class OCRLabelApp(QWidget):
         self.show()
 
     def convert_size(self, old_w, old_h):
+        print(old_w)
         max_w = self.w - 100
+        min_h = 32
         if old_w > max_w:
-            return max_w, int(old_h / old_w) * max_w
+            old_w, old_h = max_w, int((old_h / old_w) * max_w)
+
+        if old_h < min_h:
+            return int((old_w / old_h) * min_h), min_h 
         else:
             return old_w, old_h
 
@@ -92,6 +100,7 @@ class OCRLabelApp(QWidget):
     def update_display_img(self):
         pixmap = QPixmap(self.img_paths[self.current_img_index])          
         new_w, new_h = self.convert_size(pixmap.width(), pixmap.height()) 
+        print(new_w, new_h)
         self.label.setPixmap(pixmap.scaled(new_w, new_h))                 
         self.label.resize(new_w, new_h)                                   
 
